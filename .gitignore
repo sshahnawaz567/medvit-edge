@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data & model artifacts (large, not committed)
+data/
+datasets/
+*.ckpt
+*.pth
+*.pt
+*.onnx
+*.engine
+*.trt
+
+# Experiment tracking
+wandb/
+
+# Env / secrets
+.env
+*.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
