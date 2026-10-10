@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+
+# Virtual environments
 .venv/
 venv/
 env/
@@ -9,12 +11,19 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
-# Data & model artifacts (large, not committed)
-data/
-datasets/
+# Dataset (downloaded separately from Kaggle, ~45GB — never commit)
+# Anchored to repo root (/data/) — unanchored "data/" would also match src/data/,
+# silently excluding the actual source package.
+/data/
+/datasets/
+
+# Training artifacts
+checkpoints/
 *.ckpt
 *.pth
 *.pt
+
+# Optimization artifacts (Phase 3+)
 *.onnx
 *.engine
 *.trt
@@ -35,4 +44,3 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
-*.egg-info/

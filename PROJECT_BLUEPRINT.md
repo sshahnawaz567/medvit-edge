@@ -118,6 +118,7 @@ When the user asks "explain this file" or "why does this work this way," respond
 - **Hugging Face Datasets** — for data pipeline (if using HF dataset variant)
 - **torchvision** — for ResNet-50 baseline, image transforms
 - **scikit-learn** — for metrics (per-class AUROC, confusion matrices)
+- **matplotlib / seaborn** — EDA and report plotting (class distribution, confusion matrices, convergence curves)
 
 ### 4.2 Experiment Tracking
 - **Weights & Biases (W&B)** — all runs logged, every metric, every hyperparameter

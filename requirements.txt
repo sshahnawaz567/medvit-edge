@@ -1,0 +1,31 @@
+# MedViT-Edge — Phase 1 dependencies (ResNet-50 baseline)
+#
+# torch/torchvision need the CUDA 12.1 wheel index, not plain PyPI — install them
+# separately BEFORE running `pip install -r requirements.txt`:
+#   pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
+# They are pinned below for reference (matching what's in .venv as of 2026-10-08);
+# a bare `pip install -r requirements.txt` will otherwise pull CPU-only wheels
+# from PyPI for these two lines.
+torch==2.5.1
+torchvision==0.20.1
+
+# Metrics (per-class / mean AUROC)
+scikit-learn==1.9.1
+
+# Config loading
+PyYAML==6.0.3
+
+# Experiment tracking
+wandb==0.30.0
+
+# Image I/O + data handling
+pillow==12.3.0
+numpy==2.4.6
+pandas==3.0.6
+
+# Training loop UX
+tqdm==4.70.1
+
+# EDA / plotting (notebooks/01_data_exploration.ipynb)
+matplotlib==3.11.2
+seaborn==0.13.2

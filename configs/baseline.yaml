@@ -1,0 +1,65 @@
+# Baseline ResNet-50 training configuration — Phase 1.
+#
+# Every hyperparameter consumed by src/training/train.py lives here so the training
+# code has no magic numbers and every run is fully reproducible from this one file
+# (this exact config gets logged to W&B as the run's hyperparameters).
+version: "0.1.0"
+
+data:
+  # Root folder for the NIH ChestX-ray14 download (Kaggle: nih-chest-xrays/data).
+  # Expected layout: images_001/images/*.png ... images_012/images/*.png,
+  # Data_Entry_2017.csv, train_val_list.txt, test_list.txt.
+  data_dir: "data/nih-chestxray"
+  labels_csv: "Data_Entry_2017.csv"
+  train_val_list: "train_val_list.txt"   # NIH official patient-level split: train+val combined
+  test_list: "test_list.txt"             # NIH official patient-level split: held-out test
+  val_fraction: 0.1                      # fraction of train_val PATIENTS (not images) held out for validation
+  image_size: 224
+  num_workers: 4
+
+# Fixed class order — every one-hot/multi-hot vector, logit tensor, and metrics dict
+# in this project uses this exact order. "No Finding" is represented implicitly as
+# an all-zero vector and is NOT one of the 14 classes.
+classes:
+  - Atelectasis
+  - Cardiomegaly
+  - Effusion
+  - Infiltration
+  - Mass
+  - Nodule
+  - Pneumonia
+  - Pneumothorax
+  - Consolidation
+  - Edema
+  - Emphysema
+  - Fibrosis
+  - Pleural_Thickening
+  - Hernia
+
+model:
+  architecture: "resnet50"
+  pretrained: true   # ImageNet-pretrained backbone; fine-tuned end-to-end for Phase 1
+  num_classes: 14
+  dropout: 0.2        # applied before the final linear layer
+
+training:
+  seed: 42
+  batch_size: 16              # fits RTX 3050 Laptop (4GB VRAM) at 224x224 with AMP enabled
+  epochs: 20
+  optimizer: "adamw"
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  scheduler: "cosine"
+  warmup_epochs: 1
+  mixed_precision: true        # torch.cuda.amp — needed to fit batch_size=16 in 4GB VRAM
+  class_weighting: "inverse_frequency"   # strategy consumed by compute_class_weights()
+  early_stopping_patience: 5   # epochs without mean AUROC improvement before stopping
+  checkpoint_dir: "checkpoints/phase1_resnet50"
+  log_every_n_steps: 50
+
+wandb:
+  project: "medvit-edge"
+  entity: null          # set to your W&B username/team; null uses your default entity
+  run_name: "phase1-resnet50-baseline"
+  tags: ["phase1", "resnet50", "baseline"]
+  log_gpu_memory: true
