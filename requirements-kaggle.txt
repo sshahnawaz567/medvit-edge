@@ -1,0 +1,11 @@
+# MedViT-Edge — Kaggle notebook dependencies.
+#
+# Deliberately EXCLUDES torch/torchvision: Kaggle notebooks ship with a
+# CUDA-matched PyTorch+torchvision build preinstalled for their T4 GPUs.
+# Reinstalling a different pinned version (meant for local Windows+cu121 dev,
+# see requirements.txt) risks breaking that CUDA linkage for no benefit.
+# Everything below is CPU-only / no CUDA dependency, safe to install fresh.
+scikit-learn==1.9.1
+PyYAML==6.0.3
+wandb==0.30.0
+tqdm==4.70.1
