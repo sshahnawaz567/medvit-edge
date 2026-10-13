@@ -1,0 +1,72 @@
+# ViT-Base full fine-tune training configuration — Phase 2.
+#
+# Based on configs/baseline.yaml's structure, adjusted for ViT-Base: smaller
+# batch (ViT-Base's self-attention over 196 patches + CLS token is heavier
+# per-image than ResNet-50's convolutions), lower LR (3e-5 is the standard
+# starting point for full ViT fine-tuning — much lower than Phase 1's 1e-4,
+# since large-LR full fine-tuning of a transformer risks destroying
+# pretrained attention patterns), and a tighter early_stopping_patience
+# (Phase 1 already showed overfitting after epoch 4 — phases/phase1/LEARNINGS.md —
+# so Phase 2 stops watching for improvement sooner rather than re-discovering
+# the same curve on a larger model that overfits faster).
+#
+# Runs on Kaggle (T4 x2, 16GB each) — PROJECT_BLUEPRINT.md Section 7 Phase 2.
+version: "0.2.0"
+
+data:
+  data_dir: "data/nih-chestxray"
+  labels_csv: "Data_Entry_2017.csv"
+  train_val_list: "train_val_list.txt"
+  test_list: "test_list.txt"
+  val_fraction: 0.1
+  image_size: 224
+  num_workers: 4
+
+# Must match configs/baseline.yaml exactly — same 14 classes, same order.
+# Every label vector, logit tensor, and metrics dict in this project assumes
+# this exact order; a mismatch here would silently misalign predictions
+# against labels without raising any error.
+classes:
+  - Atelectasis
+  - Cardiomegaly
+  - Effusion
+  - Infiltration
+  - Mass
+  - Nodule
+  - Pneumonia
+  - Pneumothorax
+  - Consolidation
+  - Edema
+  - Emphysema
+  - Fibrosis
+  - Pleural_Thickening
+  - Hernia
+
+model:
+  architecture: "vit-base-patch16-224-in21k"
+  pretrained: true
+  num_classes: 14
+  dropout: 0.3   # stronger than Phase 1's 0.2 — ViT-Base is larger and overfits faster
+
+training:
+  seed: 42
+  batch_size: 8          # Kaggle default; override to 16-24 if GPU memory allows (T4 16GB)
+  epochs: 10             # ViT needs fewer epochs than ResNet-50's 20 to converge when fully fine-tuned at this LR
+  optimizer: "adamw_differential_lr"   # built by build_differential_lr_optimizer() in src/training/vit_optim.py
+  backbone_learning_rate: 3.0e-6       # ~10x lower than head_learning_rate
+  head_learning_rate: 3.0e-5           # standard full-fine-tune LR for ViT-Base
+  weight_decay: 1.0e-5
+  scheduler: "cosine"
+  mixed_precision: true
+  class_weighting: "inverse_frequency"
+  early_stopping_patience: 3   # tighter than Phase 1's 5 — learned from Phase 1 overfitting
+  checkpoint_dir: "checkpoints/phase2_vit_full"
+  log_every_n_steps: 50
+
+wandb:
+  project: "medvit-edge"
+  entity: null
+  run_name: "phase2-vit-full"
+  tags: ["phase2", "vit-base", "full"]
+  log_gpu_memory: true
+  log_trainable_params: true   # train_vit_full.py logs trainable param count explicitly — Phase 2's comparison story

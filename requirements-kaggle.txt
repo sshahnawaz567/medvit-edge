@@ -9,3 +9,10 @@ scikit-learn==1.9.1
 PyYAML==6.0.3
 wandb==0.30.0
 tqdm==4.70.1
+
+# Phase 2: ViT-Base full fine-tune (train_vit_full.py)
+# Pinned to match requirements.txt exactly — Kaggle's preinstalled torch is
+# new enough for transformers>=5, but pinning the same version as local
+# avoids any transformers-version-driven behavioral difference between the
+# full-fine-tune (Kaggle) and LoRA (local) runs this phase is comparing.
+transformers==4.57.6

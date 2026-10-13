@@ -1,0 +1,72 @@
+# Smoke-test configuration for train_vit_lora.py — NOT a real experiment.
+#
+# Same throwaway purpose as configs/smoke_test.yaml (Phase 1): verify the
+# full pipeline (data -> ViT model -> LoRA wrapping -> training loop ->
+# checkpointing) runs end-to-end on the tiny set of real images already
+# downloaded locally (data/nih-chestxray/images_001/, 50 images), before
+# trusting the real configs/vit_lora.yaml run. The split here uses only
+# those 50 filenames (smoke_lora_train_val_list.txt), NOT the official
+# train_val_list.txt (which references ~86K filenames most of which aren't
+# downloaded locally and would raise FileNotFoundError). AUROC from this
+# config means nothing — 50 images across 13 patients is nowhere near
+# enough signal. Do not report numbers from this config anywhere in reports/.
+version: "0.2.0-smoketest"
+
+data:
+  data_dir: "data/nih-chestxray"
+  labels_csv: "Data_Entry_2017.csv"
+  train_val_list: "smoke_lora_train_val_list.txt"
+  test_list: "smoke_lora_train_val_list.txt"   # unused by train_vit_lora.py; placeholder only
+  val_fraction: 0.2    # higher than the real 0.1 — only 13 patients total, needs a large-enough fraction to not get an empty val split
+  image_size: 224
+  num_workers: 0        # avoid Windows multiprocessing overhead for a 50-image smoke test
+
+classes:
+  - Atelectasis
+  - Cardiomegaly
+  - Effusion
+  - Infiltration
+  - Mass
+  - Nodule
+  - Pneumonia
+  - Pneumothorax
+  - Consolidation
+  - Edema
+  - Emphysema
+  - Fibrosis
+  - Pleural_Thickening
+  - Hernia
+
+model:
+  architecture: "vit-base-patch16-224-in21k"
+  pretrained: true
+  num_classes: 14
+  dropout: 0.3
+
+lora:
+  rank: 8
+  alpha: 16
+  target_modules: ["query", "value"]
+  dropout: 0.1
+
+training:
+  seed: 42
+  batch_size: 4          # small — just enough to exercise batching logic, not real training
+  epochs: 2               # just enough to confirm the loop runs and loss moves
+  optimizer: "adamw"
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  scheduler: "cosine"
+  mixed_precision: true
+  class_weighting: "inverse_frequency"
+  early_stopping_patience: 5
+  checkpoint_dir: "checkpoints/smoke_test_lora"
+  log_every_n_steps: 2
+
+wandb:
+  project: "medvit-edge"
+  entity: null
+  run_name: "phase2-vit-lora-smoke-test"
+  tags: ["smoke-test", "not-for-reports", "phase2", "lora"]
+  log_gpu_memory: true
+  log_trainable_params: true
