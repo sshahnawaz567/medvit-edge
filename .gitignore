@@ -44,3 +44,8 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+
+checkpoints/
+*.pt
+*.pth
+*.ckpt
