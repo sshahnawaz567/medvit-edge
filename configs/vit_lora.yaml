@@ -1,0 +1,70 @@
+# ViT-Base LoRA fine-tune training configuration — Phase 2.
+#
+# Same 14-class / data-pipeline structure as configs/vit_full.yaml, but a
+# much larger batch size (LoRA freezes the ~86M-param backbone, so there's no
+# optimizer state — Adam's two moment estimates per trainable param — to
+# allocate for it, freeing enough VRAM to run comfortably on the local RTX
+# 3050 Laptop's 4GB instead of needing Kaggle).
+version: "0.2.0"
+
+data:
+  data_dir: "data/nih-chestxray"
+  labels_csv: "Data_Entry_2017.csv"
+  train_val_list: "train_val_list.txt"
+  test_list: "test_list.txt"
+  val_fraction: 0.1
+  image_size: 224
+  num_workers: 4
+
+# Must match configs/baseline.yaml and configs/vit_full.yaml exactly.
+classes:
+  - Atelectasis
+  - Cardiomegaly
+  - Effusion
+  - Infiltration
+  - Mass
+  - Nodule
+  - Pneumonia
+  - Pneumothorax
+  - Consolidation
+  - Edema
+  - Emphysema
+  - Fibrosis
+  - Pleural_Thickening
+  - Hernia
+
+model:
+  architecture: "vit-base-patch16-224-in21k"
+  pretrained: true
+  num_classes: 14
+  dropout: 0.3
+
+# peft.LoraConfig parameters, consumed by apply_lora_to_vit() in
+# src/models/vit_lora.py (currently a stub — see that file).
+lora:
+  rank: 8                            # bottleneck dimension of the low-rank update
+  alpha: 16                          # conventional 2x rank scaling factor
+  target_modules: ["query", "value"] # attention projections to adapt — LoRA paper's standard choice
+  dropout: 0.1                       # dropout inside the adapter path itself
+
+training:
+  seed: 42
+  batch_size: 16         # LoRA frees up enough VRAM to double Phase 1's ResNet-50 batch size locally
+  epochs: 10
+  optimizer: "adamw"     # single flat LR — no differential LR needed (see src/training/vit_optim.py docstring)
+  learning_rate: 1.0e-4  # LoRA adapters are randomly initialized, same regime as a fresh classifier head
+  weight_decay: 1.0e-5
+  scheduler: "cosine"
+  mixed_precision: true
+  class_weighting: "inverse_frequency"
+  early_stopping_patience: 3
+  checkpoint_dir: "checkpoints/phase2_vit_lora_r8"
+  log_every_n_steps: 50
+
+wandb:
+  project: "medvit-edge"
+  entity: null
+  run_name: "phase2-vit-lora-r8"
+  tags: ["phase2", "vit-base", "lora", "rank8"]
+  log_gpu_memory: true
+  log_trainable_params: true
